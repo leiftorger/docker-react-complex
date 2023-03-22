@@ -1,0 +1,28 @@
+name: Deploy complex react project
+on:
+  push:
+    branches:
+      - master
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Build test-image and run tests
+      - run: docker build -t leiftorger/docker-react-complex-test -f ./client/Dockerfile.dev ./client
+      - run: docker run -e CI=true leiftorger/docker-react-complex-test npm test
+
+      - name: Create production build
+      - run: docker build -t leiftorger/docker-react-complex-client ./client
+      - run: docker build -t leiftorger/docker-react-complex-nginx ./nginx
+      - run: docker build -t leiftorger/docker-react-complex-server ./server
+      - run: docker build -t leiftorger/docker-react-complex-worker ./worker
+      
+      - name: Push production image to dockerhub
+      - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - run: docker push leiftorger/docker-react-complex-client
+      - run: docker push leiftorger/docker-react-complex-nginx
+      - run: docker push leiftorger/docker-react-complex-server
+      - run: docker push leiftorger/docker-react-complex-worker
