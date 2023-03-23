@@ -34,3 +34,19 @@ jobs:
           docker push leiftorger/docker-react-complex-nginx
           docker push leiftorger/docker-react-complex-server
           docker push leiftorger/docker-react-complex-worker
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+ 
+      - name: Deploy to Elastic Beanstalk on AWS
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          application_name: docker-react-complex
+          environment_name: Dockerreactcomplex-env
+          existing_bucket_name: elasticbeanstalk-eu-north-1-924027193953
+          region: eu-north-1
+          version_label: Sample Application
+          use_existing_version_if_available: true
+          deployment_package: deploy.zip
