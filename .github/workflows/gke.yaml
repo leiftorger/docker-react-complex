@@ -1,0 +1,62 @@
+name: Deploy to Google Kubernetes Engine
+
+on:
+  workflow_run:
+    workflows: ["Build, test and deploy to Dockerhub"]
+    types:
+      - completed
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: ${{ secrets.GKE_CLUSTER }}
+  GKE_ZONE: ${{ secrets.GKE_ZONE }}
+  DEPLOYMENT_NAME: server-deployment
+  IMAGE_TAG: ${{ steps.set-image-tag.outputs.IMAGE_TAG }}
+
+jobs:
+  deploy-to-k8s:
+    name: Setup and Deploy
+    runs-on: ubuntu-latest
+
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Configure Workload Identity Federation and generate an access token.
+    #- id: 'auth'
+    #  name: 'Authenticate to Google Cloud'
+    #  uses: 'google-github-actions/auth@v1'
+    #  with:
+    #    workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+    #    service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+
+    # Alternative option - authentication via credentials json
+     - id: 'auth'
+       uses: 'google-github-actions/auth@v1'
+       with:
+         credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    # Setup gcloud CLI
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - run: |-
+        gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
+
+    # Deploy sample image to the GKE cluster
+    - name: Deploy
+      run: |-
+        kubectl apply -f ./k8s
+        kubectl set image deployments/server-deployment server=leiftorger/docker-react-complex-server:$IMAGE_TAG
+        kubectl set image deployments/client-deployment client=leiftorger/docker-react-complex-client:$IMAGE_TAG
+        kubectl set image deployments/worker-deployment worker=leiftorger/docker-react-complex-worker:$IMAGE_TAG
+        kubectl rollout status deployment/docker-react-complex-server
+        kubectl rollout status deployment/docker-react-complex-client
+        kubectl rollout status deployment/docker-react-complex-worker
+        kubectl get services -o wide

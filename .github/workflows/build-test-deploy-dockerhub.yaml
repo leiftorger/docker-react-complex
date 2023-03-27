@@ -1,0 +1,42 @@
+name: Build, test and deploy to Dockerhub
+
+on:
+  workflow_run:
+    workflows: ["Set global vars"]
+    types:
+      - completed
+
+env:
+  IMAGE_TAG: ${{ steps.set-image-tag.outputs.IMAGE_TAG }}
+
+jobs:
+  build-test-deploy-to-dockerhub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Build test-image and run tests
+        run: |
+          docker build -t leiftorger/docker-react-complex-test -f ./client/Dockerfile.dev ./client
+          docker run -e CI=true leiftorger/docker-react-complex-test npm test -- --coverage
+
+      - name: Create production build
+        run: |
+          docker build -t leiftorger/docker-react-complex-client -t leiftorger/docker-react-complex-client:$IMAGE_TAG ./client
+          docker build -t leiftorger/docker-react-complex-server -t leiftorger/docker-react-complex-server:$IMAGE_TAG ./server
+          docker build -t leiftorger/docker-react-complex-worker -t leiftorger/docker-react-complex-worker:$IMAGE_TAG ./worker
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push production image to dockerhub
+        run: |
+          docker push leiftorger/docker-react-complex-client:latest
+          docker push leiftorger/docker-react-complex-client:$IMAGE_TAG
+          docker push leiftorger/docker-react-complex-server:latest
+          docker push leiftorger/docker-react-complex-server:$IMAGE_TAG
+          docker push leiftorger/docker-react-complex-worker:latest
+          docker push leiftorger/docker-react-complex-worker:$IMAGE_TAG
