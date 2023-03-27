@@ -18,7 +18,6 @@ jobs:
       - name: Create production build
         run: |
           docker build -t leiftorger/docker-react-complex-client ./client
-          docker build -t leiftorger/docker-react-complex-nginx ./nginx
           docker build -t leiftorger/docker-react-complex-server ./server
           docker build -t leiftorger/docker-react-complex-worker ./worker
       
@@ -31,7 +30,6 @@ jobs:
       - name: Push production image to dockerhub
         run: |
           docker push leiftorger/docker-react-complex-client
-          docker push leiftorger/docker-react-complex-nginx
           docker push leiftorger/docker-react-complex-server
           docker push leiftorger/docker-react-complex-worker
 
