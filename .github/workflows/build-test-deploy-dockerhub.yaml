@@ -1,8 +1,8 @@
-name: Build, test and deploy to Dockerhub
+name: build-test-and-deploy-to-dockerhub
 
 on:
   workflow_run:
-    workflows: ["Set global vars"]
+    workflows: ["set-environment-variables"]
     types:
       - completed
 
