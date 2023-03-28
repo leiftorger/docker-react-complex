@@ -7,6 +7,7 @@ on:
 
 jobs:
   set_env_vars:
+    runs-on: ubuntu-latest
     steps:
       # Setting github.sha as global image tag because github.sha varies between jobs
       - name: Set image tag
