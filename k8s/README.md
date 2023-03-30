@@ -28,3 +28,11 @@ chmod 700 get_helm.sh
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install my-release ingress-nginx/ingress-nginx
 ```
+
+Maybe this is also needed, check version of gke-gcloud-auth-plugin first via  
+`gke-gcloud-auth-plugin --version`  
+See ["Important changes to Kubectl authentication are coming in GKE v1.26"](https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke)
+
+```
+sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+```
